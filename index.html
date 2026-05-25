@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="GutDiary"/>
+<meta name="theme-color" content="#1D9E75"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="apple-touch-icon" href="/icon-192.svg"/>
+<title>GutDiary AI</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#0F6E56;
+  --coral:#D85A30;--coral-l:#FAECE7;
+  --amber:#BA7517;--amber-l:#FAEEDA;
+  --purple:#534AB7;--purple-l:#EEEDFE;
+  --red:#E24B4A;--red-l:#FCEBEB;
+  --green:#3B6D11;--green-l:#EAF3DE;
+  --bg:#F2F2F7;--card:#FFFFFF;
+  --text:#1C1C1E;--text2:#6C6C70;--text3:#AEAEB2;
+  --border:rgba(0,0,0,0.1);
+  --safe-top:env(safe-area-inset-top, 44px);
+  --safe-bottom:env(safe-area-inset-bottom, 20px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;color:var(--text)}
+.app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;position:relative}
+
+/* Header */
+.hdr{background:var(--card);padding:calc(var(--safe-top) + 10px) 20px 14px;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.hdr-row{display:flex;justify-content:space-between;align-items:flex-end}
+.app-name{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
+.app-name em{color:var(--teal);font-style:normal}
+.ai-pill{font-size:10px;background:var(--teal-l);color:var(--teal);padding:2px 7px;border-radius:6px;font-weight:600;margin-left:5px;vertical-align:middle}
+.hdr-date{font-size:13px;color:var(--text2);margin-top:3px}
+
+/* Nav */
+.nav{display:flex;background:var(--card);border-top:0.5px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom)}
+.nv{flex:1;padding:8px 4px 4px;background:none;border:none;cursor:pointer;font-size:10px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;transition:color 0.15s;font-weight:500}
+.nv i{font-size:22px}
+.nv.on{color:var(--teal)}
+
+/* Content */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.tab{display:none;padding:16px;padding-bottom:24px;min-height:100%}
+.tab.on{display:block}
+
+/* Cards */
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.card-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:10px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sec-title{font-size:20px;font-weight:700;color:var(--text)}
+
+/* Buttons */
+.btn-teal{background:var(--teal);color:#fff;border:none;border-radius:22px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit}
+.btn-teal i{font-size:16px}
+.btn-outline{background:none;border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text2);font-family:inherit}
+.btn-full{width:100%;background:var(--teal);color:#fff;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px}
+.btn-full:active{transform:scale(0.98)}
+
+/* Form fields */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.fi{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:12px;background:#F9F9F9;color:var(--text);font-size:15px;font-family:inherit;-webkit-appearance:none}
+.fi:focus{outline:none;border-color:var(--teal);background:#fff}
+textarea.fi{resize:none;line-height:1.5}
+select.fi{background-image:none}
+
+/* Section divider */
+.sdiv{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;margin:16px 0 10px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:#F2F2F7;color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:3px;transition:all 0.12s;font-family:inherit}
+.chip.sel{background:var(--coral-l);border-color:var(--coral);color:#712B13}
+.chip.add{border-style:dashed;color:var(--teal);border-color:var(--teal);background:transparent}
+
+/* Type selector */
+.type-row{display:flex;gap:8px;flex-wrap:wrap}
+.type-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:#F2F2F7;color:var(--text2);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;transition:all 0.12s}
+.type-chip.sel-B{background:#FAEEDA;border-color:#BA7517;color:#633806}
+.type-chip.sel-L{background:var(--teal-l);border-color:var(--teal);color:var(--teal-d)}
+.type-chip.sel-D{background:var(--coral-l);border-color:var(--coral);color:#712B13}
+.type-chip.sel-S{background:var(--purple-l);border-color:var(--purple);color:#3C3489}
+
+/* Meal cards */
+.meal-row{padding:10px 0;border-bottom:0.5px solid var(--border)}
+.meal-row:last-child{border-bottom:none;padding-bottom:0}
+.meal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.type-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px}
+.badge-B{background:#FAEEDA;color:#633806}
+.badge-L{background:var(--teal-l);color:var(--teal-d)}
+.badge-D{background:var(--coral-l);color:#712B13}
+.badge-S{background:var(--purple-l);color:#3C3489}
+.meal-time{font-size:12px;color:var(--text2)}
+.meal-desc{font-size:14px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:4px}
+.pill-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.a-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--coral-l);color:#993C1D;border:0.5px solid #F0997B}
+.meal-notes{font-size:12px;color:var(--text2);font-style:italic;margin-top:3px}
+.entry-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+.btn-edit{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit}
+.btn-delete{background:none;border:1px solid var(--red);border-radius:8px;padding:4px 12px;font-size:12px;color:var(--red);cursor:pointer;font-family:inherit}
+
+/* Symptom dots */
+.sym-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.sym-row:last-child{border-bottom:none}
+.sym-lbl{font-size:13px;color:var(--text);flex:1;margin-right:8px}
+.dot-row{display:flex;gap:6px}
+.dot{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:#F2F2F7;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);transition:all 0.12s}
+.dot.s1{background:var(--green-l);border-color:var(--green);color:var(--green)}
+.dot.s2{background:var(--amber-l);border-color:var(--amber);color:var(--amber)}
+.dot.s3{background:var(--coral-l);border-color:var(--coral);color:var(--coral)}
+.dot.s4{background:var(--red-l);border-color:var(--red);color:var(--red)}
+
+/* Night rows */
+.night-row{padding:10px 0;border-bottom:0.5px solid var(--border)}
+.night-row:last-child{border-bottom:none;padding-bottom:0}
+.night-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.night-date{font-size:13px;font-weight:600;color:var(--text)}
+.sev{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+.sev-mild{background:var(--green-l);color:var(--green)}
+.sev-mod{background:var(--amber-l);color:var(--amber)}
+.sev-sev{background:var(--red-l);color:var(--red)}
+.night-syms{font-size:12px;color:var(--text2);line-height:1.5}
+.night-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Stat grid */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.stat-val{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-0.5px}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* Insight bars */
+.ibar{margin-bottom:13px}
+.ibar-head{display:flex;justify-content:space-between;margin-bottom:5px}
+.ibar-name{font-size:14px;font-weight:500;color:var(--text)}
+.ibar-score{font-size:12px;font-weight:600}
+.sc-h{color:var(--red)}.sc-m{color:var(--amber)}.sc-l{color:var(--green)}
+.bar-track{height:6px;background:#F2F2F7;border-radius:3px;overflow:hidden}
+.bar-fill{height:6px;border-radius:3px;transition:width 0.6s ease}
+.fill-h{background:var(--red)}.fill-m{background:var(--amber)}.fill-l{background:var(--green)}
+.ibar-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* Disclaimer */
+.disclaimer{background:var(--amber-l);border:0.5px solid var(--amber);border-radius:14px;padding:14px;margin-bottom:12px}
+.disc-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#633806;margin-bottom:6px}
+.disc-body{font-size:12px;color:#854F0B;line-height:1.6;margin-bottom:10px}
+.prog-track{height:4px;background:#EF9F27;border-radius:2px;overflow:hidden;margin-bottom:4px}
+.prog-fill{height:4px;background:#633806;border-radius:2px}
+.prog-lbl{font-size:10px;color:#854F0B;text-align:right}
+
+/* Alert box */
+.alert-box{background:var(--coral-l);border:0.5px solid var(--coral);border-radius:14px;padding:12px;margin-bottom:12px;display:flex;gap:10px}
+.alert-box i{color:var(--coral);font-size:18px;flex-shrink:0;margin-top:1px}
+.alert-txt{font-size:13px;color:var(--text);line-height:1.5}
+
+/* Tips */
+.tips{background:var(--teal-l);border:0.5px solid var(--teal);border-radius:14px;padding:14px;margin-bottom:12px}
+.tips-title{font-size:13px;font-weight:600;color:var(--teal-d);margin-bottom:6px}
+.tips-body{font-size:12px;color:var(--teal-d);line-height:1.6}
+
+/* Chat */
+.chat-msgs{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;min-height:200px}
+.bubble{max-width:86%;padding:11px 14px;border-radius:18px;font-size:15px;line-height:1.5}
+.bubble.user{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:4px}
+.bubble.ai{align-self:flex-start;background:var(--card);color:var(--text);border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.bubble.thinking{align-self:flex-start;background:var(--card);color:var(--text2);border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-style:italic}
+.quick-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.qchip{font-size:12px;padding:5px 12px;border-radius:16px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-family:inherit}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:6px}
+.chat-input-row textarea{flex:1;padding:10px 13px;border:1px solid var(--border);border-radius:22px;background:var(--card);color:var(--text);font-size:15px;font-family:inherit;resize:none;line-height:1.4;max-height:100px}
+.chat-input-row textarea:focus{outline:none;border-color:var(--teal)}
+.send-btn{background:var(--teal);color:#fff;border:none;border-radius:50%;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.send-btn i{font-size:18px}
+.send-btn:disabled{background:var(--text3)}
+.med-disc{font-size:10px;color:var(--text3);text-align:center;padding:4px 0}
+
+/* Notif toggle */
+.notif-row{display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.notif-row:last-child{border-bottom:none}
+.notif-icon{font-size:20px;margin-right:12px;color:var(--teal)}
+.notif-info{flex:1}
+.notif-name{font-size:15px;font-weight:500;color:var(--text)}
+.notif-time{font-size:12px;color:var(--text2);margin-top:1px}
+.toggle{position:relative;width:50px;height:30px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;background:#E5E5EA;border-radius:15px;cursor:pointer;transition:0.2s}
+.slider:before{content:'';position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:2px;left:2px;transition:0.2s;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+.toggle input:checked+.slider{background:var(--teal)}
+.toggle input:checked+.slider:before{transform:translateX(20px)}
+
+/* Install banner */
+.install-banner{background:var(--teal);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.install-banner i{font-size:22px;flex-shrink:0}
+.install-text{flex:1;font-size:13px;line-height:1.4}
+.install-text strong{display:block;font-size:14px;margin-bottom:1px}
+.install-x{background:none;border:none;color:rgba(255,255,255,0.7);font-size:20px;cursor:pointer;padding:0 4px;font-family:inherit}
+
+/* Add allergen row */
+.add-row{display:flex;gap:8px;margin-top:10px}
+.add-row input{flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:#F9F9F9;color:var(--text);font-size:14px;font-family:inherit}
+.add-row input:focus{outline:none;border-color:var(--teal)}
+.add-row button{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* Key setup */
+.key-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+.key-screen i{font-size:52px;color:var(--teal);margin-bottom:16px}
+.key-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:10px}
+.key-body{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:6px}
+.key-link{font-size:13px;color:var(--teal);margin-bottom:20px}
+.key-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:#F9F9F9;color:var(--text);font-size:14px;font-family:inherit;margin-bottom:12px}
+.key-input:focus{outline:none;border-color:var(--teal)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:none}
+.modal-overlay.on{display:flex;align-items:flex-end}
+.modal{background:var(--bg);border-radius:24px 24px 0 0;width:100%;height:92vh;display:flex;flex-direction:column}
+.modal-header{display:flex;justify-content:center;align-items:center;padding:16px 20px;border-bottom:0.5px solid var(--border);background:var(--card);border-radius:24px 24px 0 0;flex-shrink:0;position:relative;min-height:54px}
+.modal-title{font-size:17px;font-weight:600;color:var(--text)}
+.modal-cancel{display:none}
+.modal-save{display:none}
+.modal-delete{position:absolute;left:20px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer;font-family:inherit;display:none}
+.modal-delete.visible{display:block}
+.modal-body{overflow-y:auto;padding:16px;flex:1;-webkit-overflow-scrolling:touch}
+.modal-footer{flex-shrink:0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,20px));background:var(--card);border-top:0.5px solid var(--border);display:flex;gap:10px}
+.modal-btn-cancel{flex:1;background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:14px;padding:15px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+.modal-btn-save{flex:2;background:var(--teal);color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* Empty state */
+.empty{text-align:center;padding:48px 16px;color:var(--text2)}
+.empty i{font-size:52px;display:block;margin-bottom:12px;opacity:0.3}
+.empty-title{font-size:16px;font-weight:500;margin-bottom:4px}
+.empty-sub{font-size:13px;color:var(--text3)}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;transform:translateX(-50%);background:#1C1C1E;color:#fff;padding:10px 20px;border-radius:22px;font-size:14px;font-weight:500;opacity:0;transition:opacity 0.25s;pointer-events:none;white-space:nowrap;z-index:200}
+.toast.show{opacity:1}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11px;color:var(--text3);margin-top:5px}
+.data-btn{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:12px;padding:11px 14px;cursor:pointer;background:none;font-size:14px;font-weight:500;font-family:inherit;width:100%;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- Install Banner -->
+<div class="install-banner" id="install-banner" style="display:none">
+  <i class="ti ti-download" aria-hidden="true"></i>
+  <div class="install-text">
+    <strong>Add to Home Screen</strong>
+    Tap the Share button → "Add to Home Screen" to install
+  </div>
+  <button class="install-x" onclick="dismissBanner()" aria-label="Dismiss">×</button>
+</div>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-row">
+    <div>
+      <div class="app-name">Gut<em>Diary</em><span class="ai-pill">AI</span></div>
+      <div class="hdr-date" id="hdr-date"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content" id="content">
+
+  <!-- LOG TAB -->
+  <div class="tab on" id="tab-log">
+    <div class="sec-head">
+      <div class="sec-title">Today's meals</div>
+      <button class="btn-teal" onclick="openMealForm()"><i class="ti ti-plus" aria-hidden="true"></i>Add meal</button>
+    </div>
+    <div id="meals-list"></div>
+  </div>
+
+  <!-- NIGHT TAB -->
+  <div class="tab" id="tab-night">
+    <div class="sec-head">
+      <div class="sec-title">Night events</div>
+      <button class="btn-teal" onclick="openNightForm()"><i class="ti ti-plus" aria-hidden="true"></i>Record</button>
+    </div>
+    <div id="nights-list"></div>
+  </div>
+
+  <!-- INSIGHTS TAB -->
+  <div class="tab" id="tab-insights">
+    <div id="insights-content"></div>
+  </div>
+
+  <!-- AI TAB -->
+  <div class="tab" id="tab-ai">
+    <div id="ai-content"></div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab" id="tab-settings">
+    <div id="settings-content"></div>
+  </div>
+
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+  <button class="nv on" onclick="sw('log')" id="nv-log"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Log</button>
+  <button class="nv" onclick="sw('night')" id="nv-night"><i class="ti ti-moon" aria-hidden="true"></i>Night</button>
+  <button class="nv" onclick="sw('insights')" id="nv-insights"><i class="ti ti-chart-bar" aria-hidden="true"></i>Insights</button>
+  <button class="nv" onclick="sw('ai')" id="nv-ai"><i class="ti ti-sparkles" aria-hidden="true"></i>AI</button>
+  <button class="nv" onclick="sw('settings')" id="nv-settings"><i class="ti ti-settings" aria-hidden="true"></i>Settings</button>
+</nav>
+
+</div>
+
+<!-- Meal Modal -->
+<div class="modal-overlay" id="meal-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="modal-delete" id="meal-delete-btn" onclick="deleteMeal()">Delete</button>
+      <span class="modal-title" id="meal-modal-title">Log a meal</span>
+    </div>
+    <div class="modal-body">
+      <div class="sdiv">Meal info</div>
+      <div class="field">
+        <label>Meal type</label>
+        <div class="type-row" id="type-row"></div>
+      </div>
+      <div class="field">
+        <label>Time</label>
+        <input type="time" class="fi" id="m-time"/>
+      </div>
+      <div class="field">
+        <label>Meal description</label>
+        <textarea class="fi" id="m-desc" rows="3" placeholder="e.g. Grilled salmon with roasted broccoli and brown rice..."></textarea>
+      </div>
+      <div class="sdiv">Allergens / triggers</div>
+      <div class="field">
+        <label>Tap to mark allergens present in this meal</label>
+        <div class="chips" id="allergen-chips"></div>
+        <div class="add-row">
+          <input id="new-allergen" placeholder="Add to your list..." onkeydown="if(event.key==='Enter')addAllergenFromForm()"/>
+          <button onclick="addAllergenFromForm()">Add</button>
+        </div>
+        <div class="hint">New items are saved to your list permanently.</div>
+      </div>
+      <div class="sdiv">Notes <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)">(optional)</span></div>
+      <div class="field">
+        <textarea class="fi" id="m-notes" rows="2" placeholder="Portion size, eating speed, stress level, restaurant vs home..."></textarea>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-cancel" onclick="closeModal('meal-modal')">Cancel</button>
+      <button class="modal-btn-save" onclick="saveMeal()">Save meal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Night Modal -->
+<div class="modal-overlay" id="night-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="modal-delete" id="night-delete-btn" onclick="deleteNight()">Delete</button>
+      <span class="modal-title" id="night-modal-title">Record symptoms</span>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <div class="row2">
+          <div class="field" style="margin-bottom:0">
+            <label>Date of night</label>
+            <input type="date" class="fi" id="n-date"/>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Wake time</label>
+            <input type="time" class="fi" id="n-time"/>
+          </div>
+        </div>
+      </div>
+      <div class="sdiv">Symptom severity &nbsp;<span style="font-weight:400;text-transform:none;letter-spacing:0">1 mild → 4 severe</span></div>
+      <div class="card">
+        <div id="sym-rater"></div>
+      </div>
+      <div class="sdiv">Notes <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)">(optional)</span></div>
+      <div class="card">
+        <textarea class="fi" id="n-notes" rows="3" placeholder="Duration, what helped, how you felt..."></textarea>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-cancel" onclick="closeModal('night-modal')">Cancel</button>
+      <button class="modal-btn-save" onclick="saveNight()">Save event</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ALLERGEN_DEFAULTS=['Dairy / milk','Gluten / wheat','Eggs','Tree nuts','Peanuts','Shellfish','Fish','Soy','Sesame','Onion','Garlic','Tomato','Coffee','Alcohol','Spicy food','Fried food','Citrus','Chocolate','Beans / legumes','Red meat','Processed sugar','Corn'];
+const SYMPTOMS=['Stomach pain','Indigestion / acid reflux','Bloating','Gas','Nausea','Inflammation / heat','Disrupted sleep'];
+const TYPE_LABELS={B:'Breakfast',L:'Lunch',D:'Dinner',S:'Snack'};
+const MIN_DAYS=14;
+
+let meals=JSON.parse(localStorage.getItem('gd_meals')||'[]');
+let nights=JSON.parse(localStorage.getItem('gd_nights')||'[]');
+let allergens=JSON.parse(localStorage.getItem('gd_allergens')||JSON.stringify(ALLERGEN_DEFAULTS));
+let notifSettings=JSON.parse(localStorage.getItem('gd_notif')||'{}');
+let apiKey=localStorage.getItem('gd_apikey')||'';
+let chatHistory=[];
+let selAllergens=[];
+let symRatings={};
+let currentMealType='D';
+let currentTab='log';
+let notifTimers={};
+let editingMealId=null;
+let editingNightId=null;
+
+function persist(){
+  localStorage.setItem('gd_meals',JSON.stringify(meals));
+  localStorage.setItem('gd_nights',JSON.stringify(nights));
+  localStorage.setItem('gd_allergens',JSON.stringify(allergens));
+  localStorage.setItem('gd_notif',JSON.stringify(notifSettings));
+  if(apiKey)localStorage.setItem('gd_apikey',apiKey);
+}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+
+function todayStr(){return new Date().toISOString().split('T')[0]}
+function nowTime(){const d=new Date();return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function fmt12(t){if(!t)return'';const[h,m]=t.split(':');const hh=parseInt(h);return`${hh%12||12}:${m} ${hh<12?'AM':'PM'}`}
+
+function daysOfData(){
+  const all=[...meals.map(m=>m.date),...nights.map(n=>n.date)];
+  if(!all.length)return 0;
+  const min=all.reduce((a,b)=>a<b?a:b);
+  const max=all.reduce((a,b)=>a>b?a:b);
+  return Math.round((new Date(max)-new Date(min))/86400000)+1;
+}
+
+function getAllergenScores(){
+  const sc={};
+  nights.forEach(n=>{
+    const dayMeals=meals.filter(m=>m.date===n.date);
+    const al=[...new Set(dayMeals.flatMap(m=>m.allergens||[]))];
+    al.forEach(a=>{if(!sc[a])sc[a]={nights:0,totalSev:0};sc[a].nights++;sc[a].totalSev+=n.maxSeverity;});
+  });
+  return sc;
+}
+
+// ── NAVIGATION ──
+function sw(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nv').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+  document.getElementById('nv-'+tab).classList.add('on');
+  currentTab=tab;
+  document.getElementById('content').scrollTop=0;
+  if(tab==='insights')renderInsights();
+  if(tab==='ai')renderAI();
+  if(tab==='settings')renderSettings();
+  if(tab==='log')renderMeals();
+  if(tab==='night')renderNights();
+}
+
+// ── MEAL FORM ──
+function openMealForm(id){
+  editingMealId=id||null;
+  const existing=id?meals.find(m=>m.id===id):null;
+  selAllergens=existing?[...existing.allergens]:[]; 
+  currentMealType=existing?existing.type:'D';
+  document.getElementById('m-time').value=existing?existing.time:nowTime();
+  document.getElementById('m-desc').value=existing?existing.description:'';
+  document.getElementById('m-notes').value=existing?existing.notes:'';
+  document.getElementById('new-allergen').value='';
+  document.getElementById('meal-modal-title').textContent=existing?'Edit meal':'Log a meal';
+  const delBtn=document.getElementById('meal-delete-btn');
+  delBtn.classList.toggle('visible',!!existing);
+  renderTypeRow();renderAllergenChips();
+  openModal('meal-modal');
+}
+
+function renderTypeRow(){
+  document.getElementById('type-row').innerHTML=['B','L','D','S'].map(k=>
+    `<button class="type-chip${currentMealType===k?' sel-'+k:''}" onclick="setType('${k}')">${TYPE_LABELS[k]}</button>`
+  ).join('');
+}
+
+function setType(k){currentMealType=k;renderTypeRow()}
+
+function renderAllergenChips(){
+  document.getElementById('allergen-chips').innerHTML=allergens.map(a=>{
+    const s=selAllergens.includes(a);
+    return `<button class="chip${s?' sel':''}" onclick="togA('${a.replace(/'/g,"\\'")}')">${s?'<i class="ti ti-check" style="font-size:10px" aria-hidden="true"></i>':''}${a}</button>`;
+  }).join('');
+}
+
+function togA(a){selAllergens.includes(a)?selAllergens=selAllergens.filter(x=>x!==a):selAllergens.push(a);renderAllergenChips()}
+
+function addAllergenFromForm(){
+  const v=document.getElementById('new-allergen').value.trim();
+  if(!v)return;
+  if(!allergens.includes(v)){allergens.push(v);persist();}
+  if(!selAllergens.includes(v))selAllergens.push(v);
+  document.getElementById('new-allergen').value='';
+  renderAllergenChips();toast(`"${v}" added`);
+}
+
+function saveMeal(){
+  const desc=document.getElementById('m-desc').value.trim();
+  if(!desc){alert('Please enter a meal description.');return;}
+  if(editingMealId){
+    const idx=meals.findIndex(m=>m.id===editingMealId);
+    if(idx>-1){
+      meals[idx]={...meals[idx],type:currentMealType,label:TYPE_LABELS[currentMealType],
+        time:document.getElementById('m-time').value,description:desc,
+        allergens:[...selAllergens],notes:document.getElementById('m-notes').value.trim()};
+    }
+    toast('Meal updated ✓');
+  } else {
+    meals.unshift({
+      id:Date.now()+'',type:currentMealType,label:TYPE_LABELS[currentMealType],
+      time:document.getElementById('m-time').value,date:todayStr(),
+      description:desc,allergens:[...selAllergens],
+      notes:document.getElementById('m-notes').value.trim()
+    });
+    toast('Meal logged ✓');
+  }
+  persist();closeModal('meal-modal');renderMeals();
+}
+
+function deleteMeal(){
+  if(!editingMealId)return;
+  if(!confirm('Delete this meal entry?'))return;
+  meals=meals.filter(m=>m.id!==editingMealId);
+  persist();closeModal('meal-modal');renderMeals();toast('Meal deleted');
+}
+
+function renderMeals(){
+  const tm=meals.filter(m=>m.date===todayStr());
+  const el=document.getElementById('meals-list');
+  if(!tm.length){el.innerHTML=`<div class="empty"><i class="ti ti-salad" aria-hidden="true"></i><div class="empty-title">No meals logged today</div><div class="empty-sub">Tap "Add meal" to start tracking</div></div>`;return;}
+  el.innerHTML=`<div class="card">${tm.map((m)=>`
+    <div class="meal-row">
+      <div class="meal-top"><span class="type-badge badge-${m.type}">${m.label}</span><span class="meal-time">${m.time||'—'}</span></div>
+      <div class="meal-desc">${m.description}</div>
+      ${m.allergens?.length?`<div class="pill-row">${m.allergens.map(a=>`<span class="a-pill">${a}</span>`).join('')}</div>`:''}
+      ${m.notes?`<div class="meal-notes">${m.notes}</div>`:''}
+      <div class="entry-actions"><button class="btn-edit" onclick="openMealForm('${m.id}')"><i class="ti ti-pencil" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Edit</button></div>
+    </div>`).join('')}</div>`;
+}
+
+// ── NIGHT FORM ──
+function openNightForm(id){
+  editingNightId=id||null;
+  const existing=id?nights.find(n=>n.id===id):null;
+  symRatings=existing?{...existing.symptoms}:{};
+  document.getElementById('n-date').value=existing?existing.date:todayStr();
+  document.getElementById('n-time').value=existing?existing.time:nowTime();
+  document.getElementById('n-notes').value=existing?existing.notes:'';
+  document.getElementById('night-modal-title').textContent=existing?'Edit night event':'Record symptoms';
+  const delBtn=document.getElementById('night-delete-btn');
+  delBtn.classList.toggle('visible',!!existing);
+  document.getElementById('sym-rater').innerHTML=SYMPTOMS.map(s=>`
+    <div class="sym-row">
+      <div class="sym-lbl">${s}</div>
+      <div class="dot-row">${[1,2,3,4].map(n=>`<button class="dot" id="d${s.replace(/\W/g,'')}${n}" onclick="rateSym('${s}',${n})">${n}</button>`).join('')}</div>
+    </div>`).join('');
+  // Re-apply ratings to dots
+  Object.entries(symRatings).forEach(([s,v])=>{
+    const k=s.replace(/\W/g,'');
+    [1,2,3,4].forEach(n=>{
+      const el=document.getElementById('d'+k+n);
+      if(el&&n<=v)el.classList.add('s'+Math.min(v,4));
+    });
+  });
+  openModal('night-modal');
+}
+
+function rateSym(s,v){
+  symRatings[s]=symRatings[s]===v?0:v;
+  const k=s.replace(/\W/g,'');
+  [1,2,3,4].forEach(n=>{
+    const el=document.getElementById('d'+k+n);
+    if(el){el.className='dot';if(n<=(symRatings[s]||0))el.classList.add('s'+Math.min(symRatings[s],4));}
+  });
+}
+
+function saveNight(){
+  const act=Object.entries(symRatings).filter(([,v])=>v>0);
+  if(!act.length){alert('Rate at least one symptom.');return;}
+  const nd=document.getElementById('n-date').value;
+  if(editingNightId){
+    const idx=nights.findIndex(n=>n.id===editingNightId);
+    if(idx>-1){
+      nights[idx]={...nights[idx],date:nd,time:document.getElementById('n-time').value,
+        symptoms:Object.fromEntries(act),maxSeverity:Math.max(...act.map(([,v])=>v)),
+        notes:document.getElementById('n-notes').value.trim(),
+        linkedAllergens:meals.filter(m=>m.date===nd).flatMap(m=>m.allergens||[])};
+    }
+    toast('Night event updated ✓');
+  } else {
+    nights.unshift({
+      id:Date.now()+'',date:nd,time:document.getElementById('n-time').value,
+      symptoms:Object.fromEntries(act),maxSeverity:Math.max(...act.map(([,v])=>v)),
+      notes:document.getElementById('n-notes').value.trim(),
+      linkedAllergens:meals.filter(m=>m.date===nd).flatMap(m=>m.allergens||[])
+    });
+    toast('Night event saved ✓');
+  }
+  persist();closeModal('night-modal');renderNights();
+}
+
+function deleteNight(){
+  if(!editingNightId)return;
+  if(!confirm('Delete this night event?'))return;
+  nights=nights.filter(n=>n.id!==editingNightId);
+  persist();closeModal('night-modal');renderNights();toast('Event deleted');
+}
+
+function renderNights(){
+  const el=document.getElementById('nights-list');
+  if(!nights.length){el.innerHTML=`<div class="empty"><i class="ti ti-moon-off" aria-hidden="true"></i><div class="empty-title">No night events yet</div><div class="empty-sub">Tap "Record" after a rough night</div></div>`;return;}
+  el.innerHTML=`<div class="card">${nights.slice(0,20).map(n=>{
+    const sl=n.maxSeverity<=1?'Mild':n.maxSeverity<=2?'Moderate':'Severe';
+    const sc=n.maxSeverity<=1?'sev-mild':n.maxSeverity<=2?'sev-mod':'sev-sev';
+    const sy=Object.entries(n.symptoms).filter(([,v])=>v>0).map(([k,v])=>`${k} (${v})`).join(', ');
+    const d=new Date(n.date+'T12:00:00');
+    return `<div class="night-row"><div class="night-top"><div class="night-date">${d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div><span class="sev ${sc}">${sl}</span></div><div class="night-syms">${sy}</div>${n.time?`<div class="night-sub">Woke at ${n.time}</div>`:''}<div class="entry-actions"><button class="btn-edit" onclick="openNightForm('${n.id}')"><i class="ti ti-pencil" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Edit</button></div></div>`;
+  }).join('')}</div>`;
+}
+
+// ── INSIGHTS ──
+function renderInsights(){
+  const el=document.getElementById('insights-content');
+  const days=daysOfData();const scores=getAllergenScores();
+  const ranked=Object.keys(scores).sort((a,b)=>(scores[b].totalSev/scores[b].nights)-(scores[a].totalSev/scores[a].nights));
+  const symTotals={};nights.forEach(n=>Object.entries(n.symptoms||{}).forEach(([s,v])=>{symTotals[s]=(symTotals[s]||0)+v}));
+  const avgSev=nights.length?(nights.reduce((a,n)=>a+n.maxSeverity,0)/nights.length).toFixed(1):'—';
+  let h='';
+
+  if(days<MIN_DAYS){
+    const pct=Math.min(100,Math.round((days/MIN_DAYS)*100));
+    h+=`<div class="disclaimer"><div class="disc-head"><i class="ti ti-clock" aria-hidden="true"></i>Building your baseline — ${days}/${MIN_DAYS} days</div><div class="disc-body">AI analysis becomes reliable at 14 days of consistent logging. The patterns below are preliminary — keep logging daily.</div><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div><div class="prog-lbl">${pct}% to reliable insights</div></div>`;
+  }
+
+  if(!nights.length){h+=`<div class="empty"><i class="ti ti-telescope" aria-hidden="true"></i><div class="empty-title">No data yet</div><div class="empty-sub">Log meals and night events to see patterns</div></div>`;el.innerHTML=h;return;}
+
+  h+=`<div class="stat-grid"><div class="stat-card"><div class="stat-val">${nights.length}</div><div class="stat-lbl">Nights recorded</div></div><div class="stat-card"><div class="stat-val">${avgSev}/4</div><div class="stat-lbl">Avg severity</div></div><div class="stat-card"><div class="stat-val">${meals.length}</div><div class="stat-lbl">Meals logged</div></div><div class="stat-card"><div class="stat-val">${days}</div><div class="stat-lbl">Days tracked</div></div></div>`;
+
+  if(ranked.length&&days>=MIN_DAYS){
+    const top=ranked[0];const avg=scores[top].totalSev/scores[top].nights;
+    if(avg>=2.5)h+=`<div class="alert-box"><i class="ti ti-alert-triangle" aria-hidden="true"></i><div class="alert-txt"><strong>${top}</strong> appears consistently on your worst nights. Consider a 2-week elimination test and discuss with your doctor.</div></div>`;
+  }
+
+  if(ranked.length){
+    h+=`<div class="card"><div class="card-label">Allergen correlation</div>`;
+    ranked.slice(0,10).forEach(a=>{
+      const avg=scores[a].totalSev/scores[a].nights;
+      const pct=Math.round((avg/4)*100);
+      const cls=avg>=3?'h':avg>=2?'m':'l';
+      const lbl=avg>=3?'High risk':avg>=2?'Moderate':'Low risk';
+      h+=`<div class="ibar"><div class="ibar-head"><div class="ibar-name">${a}</div><div class="ibar-score sc-${cls}">${lbl}</div></div><div class="bar-track"><div class="bar-fill fill-${cls}" style="width:${pct}%"></div></div><div class="ibar-sub">${scores[a].nights} night${scores[a].nights>1?'s':''} · avg ${avg.toFixed(1)}/4</div></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  if(Object.keys(symTotals).length){
+    h+=`<div class="card"><div class="card-label">Symptom frequency</div>`;
+    Object.entries(symTotals).sort((a,b)=>b[1]-a[1]).forEach(([s,v])=>{
+      const pct=Math.round((v/(nights.length*4))*100);
+      h+=`<div class="ibar"><div class="ibar-head"><div class="ibar-name">${s}</div><div class="ibar-score" style="color:var(--purple)">${pct}%</div></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--purple)"></div></div></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  h+=`<div class="tips"><div class="tips-title">How to use this data</div><div class="tips-body">Foods with high correlation are leads, not diagnoses. Try eliminating the top 1–2 for 2 weeks and track if your nights improve. Always discuss with a doctor or registered dietitian before major dietary changes.</div></div>`;
+  el.innerHTML=h;
+}
+
+// ── AI ──
+function buildDataSummary(){
+  const scores=getAllergenScores();
+  const ranked=Object.keys(scores).sort((a,b)=>(scores[b].totalSev/scores[b].nights)-(scores[a].totalSev/scores[a].nights));
+  const symTotals={};nights.forEach(n=>Object.entries(n.symptoms||{}).forEach(([s,v])=>{symTotals[s]=(symTotals[s]||0)+v}));
+  const topSyms=Object.entries(symTotals).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s])=>s);
+  const topFoods=ranked.slice(0,5).map(a=>`${a} (avg ${(scores[a].totalSev/scores[a].nights).toFixed(1)}/4, ${scores[a].nights} nights)`);
+  const recent=meals.slice(0,4).map(m=>`${m.label} ${m.date}: "${m.description}"${m.allergens?.length?' ['+m.allergens.join(', ')+']':''}`);
+  return `GutDiary data:
+- Days tracked: ${daysOfData()} (${daysOfData()>=MIN_DAYS?'sufficient':'<14 days, preliminary'})
+- Night events: ${nights.length}, meals: ${meals.length}
+- Avg severity: ${nights.length?(nights.reduce((a,n)=>a+n.maxSeverity,0)/nights.length).toFixed(1):0}/4
+- Top symptoms: ${topSyms.join(', ')||'none'}
+- Top allergen correlations: ${topFoods.join('; ')||'none yet'}
+- Recent meals: ${recent.join(' | ')||'none'}`;
+}
+
+function renderAI(){
+  const el=document.getElementById('ai-content');
+  if(!apiKey){
+    el.innerHTML=`<div class="key-screen">
+      <i class="ti ti-sparkles" aria-hidden="true"></i>
+      <div class="key-title">Connect AI assistant</div>
+      <div class="key-body">Enter your Anthropic API key to enable personalized gut health analysis based on your data.</div>
+      <div class="key-link">Get a free key at console.anthropic.com</div>
+      <input class="key-input" id="key-input" type="password" placeholder="sk-ant-..." autocomplete="off" autocapitalize="none"/>
+      <button class="btn-full" onclick="saveApiKey()">Save & connect</button>
+    </div>`;
+    return;
+  }
+
+  const days=daysOfData();
+  let h='';
+  if(days<MIN_DAYS){
+    const pct=Math.min(100,Math.round((days/MIN_DAYS)*100));
+    h+=`<div class="disclaimer" style="margin-bottom:12px"><div class="disc-head"><i class="ti ti-clock" aria-hidden="true"></i>${days}/${MIN_DAYS} days — building baseline</div><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;
+  }
+
+  if(!chatHistory.length){
+    const intro=days>=MIN_DAYS
+      ?`I've reviewed your ${days} days of data — ${nights.length} night events and ${meals.length} meals logged. I can see some patterns forming. What would you like to understand?`
+      :`You have ${days} of ${MIN_DAYS} days logged. I can spot some early patterns — ask me anything about what you've recorded.`;
+    chatHistory=[{role:'assistant',content:intro}];
+  }
+
+  const QUICK_QS=days>=MIN_DAYS
+    ?['Which allergens should I avoid?','What\'s my worst symptom?','Should I try elimination diet?','How are nights trending?']
+    :['What patterns can you see?','Which foods look risky?','How long until enough data?','How should I log meals?'];
+
+  h+=`<div class="card">
+    <div class="card-label" style="margin-bottom:10px">AI Health Assistant</div>
+    <div class="chat-msgs" id="chat-msgs">${chatHistory.map(m=>`<div class="bubble ${m.role}">${m.content}</div>`).join('')}</div>
+    <div class="quick-chips">${QUICK_QS.map(q=>`<button class="qchip" onclick="quickAsk(this,'${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>
+    <div class="chat-input-row">
+      <textarea id="chat-in" rows="1" placeholder="Ask about your patterns..." onkeydown="chatKey(event)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendChat()" aria-label="Send"><i class="ti ti-send" aria-hidden="true"></i></button>
+    </div>
+    <div class="med-disc">Not medical advice · Consult a doctor or dietitian for diagnosis</div>
+  </div>
+  <div style="text-align:right;margin-top:-6px;margin-bottom:12px">
+    <button onclick="resetApiKey()" style="font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:inherit">Change API key</button>
+  </div>`;
+  el.innerHTML=h;
+  scrollChat();
+}
+
+function quickAsk(btn,q){document.getElementById('chat-in').value=q;sendChat();}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function scrollChat(){const el=document.getElementById('chat-msgs');if(el)el.scrollTop=el.scrollHeight;}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-in');
+  const msg=inp?.value.trim();
+  if(!msg)return;
+  inp.value='';
+  document.getElementById('send-btn').disabled=true;
+  chatHistory.push({role:'user',content:msg});
+  chatHistory.push({role:'assistant',content:'...'});
+  document.getElementById('chat-msgs').innerHTML=chatHistory.map(m=>`<div class="bubble ${m.role==='...'?'thinking':m.role}">${m.content}</div>`).join('');
+  scrollChat();
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`You are a compassionate gut health AI assistant in GutDiary. The user tracks food sensitivities causing nighttime stomach pain, indigestion, and inflammation.
+
+${buildDataSummary()}
+
+Be warm, specific, concise (2-4 sentences). Reference their actual allergen/food data when relevant. Always note findings are correlational and a doctor or dietitian should be consulted. If <14 days, acknowledge but provide early observations.`,
+        messages:chatHistory.slice(0,-1).map(m=>({role:m.role,content:m.content}))
+      })
+    });
+    const data=await res.json();
+    const reply=data.content?.find(b=>b.type==='text')?.text||data.error?.message||'Sorry, I had trouble responding. Please try again.';
+    chatHistory[chatHistory.length-1]={role:'assistant',content:reply};
+  }catch(e){
+    chatHistory[chatHistory.length-1]={role:'assistant',content:'Connection error. Please check your network and try again.'};
+  }
+
+  document.getElementById('chat-msgs').innerHTML=chatHistory.map(m=>`<div class="bubble ${m.role}">${m.content}</div>`).join('');
+  document.getElementById('send-btn').disabled=false;
+  scrollChat();
+}
+
+function saveApiKey(){
+  const k=document.getElementById('key-input')?.value.trim();
+  if(!k)return;
+  apiKey=k;persist();renderAI();toast('AI assistant connected ✓');
+}
+
+function resetApiKey(){apiKey='';localStorage.removeItem('gd_apikey');chatHistory=[];renderAI();}
+
+// ── SETTINGS ──
+function renderSettings(){
+  const NOTIFS=[
+    {key:'breakfast',label:'Breakfast',icon:'ti-coffee',def:'8:00 AM'},
+    {key:'lunch',label:'Lunch',icon:'ti-sun',def:'12:30 PM'},
+    {key:'dinner',label:'Dinner',icon:'ti-moon',def:'7:00 PM'},
+    {key:'morning',label:'Morning check-in',icon:'ti-alarm',def:'7:00 AM'},
+  ];
+
+  let h=`<div class="sec-title" style="margin-bottom:14px">Settings</div>`;
+
+  h+=`<div class="card-label">Notifications</div><div class="card">`;
+  NOTIFS.forEach(({key,label,icon,def})=>{
+    const s=notifSettings[key]||{};
+    const time=s.time||def;
+    h+=`<div class="notif-row"><i class="ti ${icon} notif-icon" aria-hidden="true"></i><div class="notif-info"><div class="notif-name">${label}</div><div class="notif-time">${key==='morning'?time+' · Log last night':time}</div></div><label class="toggle"><input type="checkbox" ${s.enabled?'checked':''} onchange="toggleNotif('${key}',this.checked)"/><span class="slider"></span></label></div>`;
+  });
+  h+=`</div><div class="hint" style="margin-bottom:16px">Note: Web app notifications work while the app is open. For background alerts, use your iPhone Reminders app as a backup.</div>`;
+
+  h+=`<div class="card-label">My allergen list</div><div class="card"><div style="font-size:12px;color:var(--text2);margin-bottom:10px">Tap × to remove. These appear in the meal logger.</div><div class="chips" id="settings-chips"></div><div class="add-row"><input id="settings-allergen" placeholder="Add allergen..." onkeydown="if(event.key==='Enter')settingsAddAllergen()"/><button onclick="settingsAddAllergen()">Add</button></div></div>`;
+
+  h+=`<div class="card-label" style="margin-top:16px">Data</div><div class="card">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${meals.length} meals · ${nights.length} night events</div>
+    <button class="data-btn" onclick="exportData()" style="color:var(--teal);border-color:var(--teal)"><i class="ti ti-download" aria-hidden="true"></i>Export as CSV</button>
+    <button class="data-btn" onclick="clearData()" style="color:var(--red);border-color:var(--red)"><i class="ti ti-trash" aria-hidden="true"></i>Clear all data</button>
+  </div>`;
+
+  h+=`<div class="card-label" style="margin-top:16px">About</div><div class="card" style="font-size:13px;color:var(--text2);line-height:1.7">GutDiary helps identify food sensitivities by tracking meals and overnight symptoms. AI powered by Claude (Anthropic).<br><br><em>Not a medical device. Always consult a healthcare professional for medical advice.</em></div>`;
+
+  document.getElementById('settings-content').innerHTML=h;
+  renderSettingsChips();
+}
+
+function renderSettingsChips(){
+  const el=document.getElementById('settings-chips');
+  if(!el)return;
+  el.innerHTML=allergens.map(a=>`<span class="chip" style="cursor:default">${a} <button onclick="removeAllergen('${a.replace(/'/g,"\\'")}');event.stopPropagation()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0 0 0 2px;font-family:inherit" aria-label="Remove ${a}">×</button></span>`).join('');
+}
+
+function settingsAddAllergen(){
+  const v=document.getElementById('settings-allergen').value.trim();
+  if(!v||allergens.includes(v))return;
+  allergens.push(v);persist();
+  document.getElementById('settings-allergen').value='';
+  renderSettingsChips();toast(`"${v}" added`);
+}
+
+function removeAllergen(a){
+  allergens=allergens.filter(x=>x!==a);persist();renderSettingsChips();toast(`"${a}" removed`);
+}
+
+function toggleNotif(key,enabled){
+  if(!notifSettings[key])notifSettings[key]={};
+  notifSettings[key].enabled=enabled;
+  persist();
+  if(enabled)scheduleNotif(key);
+  else cancelNotif(key);
+  toast(enabled?'Reminder on':'Reminder off');
+}
+
+function scheduleNotif(key){
+  cancelNotif(key);
+  const msgs={
+    breakfast:'Time to log breakfast — what are you eating?',
+    lunch:"Lunch time! Don't forget to log your meal.",
+    dinner:'Dinner reminder — log what you eat for better insights.',
+    morning:'Good morning! Did you have a rough night? Log any symptoms.'
+  };
+  const times={breakfast:[8,0],lunch:[12,30],dinner:[19,0],morning:[7,0]};
+  const [h,m]=times[key];
+  const now=new Date(),target=new Date();
+  target.setHours(h,m,0,0);
+  if(target<=now)target.setDate(target.getDate()+1);
+  notifTimers[key]=setTimeout(()=>{
+    if('Notification' in window&&Notification.permission==='granted'){
+      new Notification('GutDiary',{body:msgs[key],tag:'gd-'+key});
+    }else{toast(msgs[key]);}
+    if(notifSettings[key]?.enabled)scheduleNotif(key);
+  },target-now);
+}
+
+function cancelNotif(key){if(notifTimers[key]){clearTimeout(notifTimers[key]);delete notifTimers[key];}}
+
+function exportData(){
+  let csv='Date,Meal Type,Time,Description,Allergens,Notes\n';
+  meals.forEach(m=>csv+=`${m.date},${m.label},${m.time},"${m.description}","${(m.allergens||[]).join('; ')}","${m.notes||''}"\n`);
+  csv+='\nDate,Wake Time,Max Severity,Symptoms,Notes\n';
+  nights.forEach(n=>{
+    const sy=Object.entries(n.symptoms||{}).map(([k,v])=>`${k}:${v}`).join('; ');
+    csv+=`${n.date},${n.time||''},${n.maxSeverity},"${sy}","${n.notes||''}"\n`;
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='gutdiary-export.csv';a.click();
+  toast('Exported ✓');
+}
+
+function clearData(){
+  if(confirm('Clear all meal and night data? This cannot be undone.')){
+    meals=[];nights=[];chatHistory=[];persist();
+    renderMeals();renderNights();
+    toast('Data cleared');
+  }
+}
+
+// ── MODAL ──
+function openModal(id){document.getElementById(id).classList.add('on')}
+function closeModal(id){document.getElementById(id).classList.remove('on')}
+
+// ── INSTALL BANNER ──
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{deferredPrompt=e;});
+function showInstallBanner(){
+  // Show iOS instructions since beforeinstallprompt doesn't fire on iOS
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches;
+  if(!isStandalone&&isIOS&&!localStorage.getItem('banner-dismissed')){
+    document.getElementById('install-banner').style.display='flex';
+  }
+}
+function dismissBanner(){
+  document.getElementById('install-banner').style.display='none';
+  localStorage.setItem('banner-dismissed','1');
+}
+
+// ── INIT ──
+document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    // Check for updates every 60 seconds
+    setInterval(() => reg.update(), 60000);
+
+    // When a new service worker is waiting, activate it immediately
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+          // New version available — reload to get fresh app
+          newWorker.postMessage('skipWaiting');
+          window.location.reload();
+        }
+      });
+    });
+  }).catch(()=>{});
+
+  // If the service worker controller changes, reload the page
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+if('Notification' in window&&Notification.permission==='default'){
+  Notification.requestPermission();
+}
+
+renderMeals();
+renderNights();
+showInstallBanner();
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('on');});
+});
+</script>
+</body>
+</html>
