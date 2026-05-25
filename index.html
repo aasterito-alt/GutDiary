@@ -100,6 +100,9 @@ select.fi{background-image:none}
 .pill-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .a-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--coral-l);color:#993C1D;border:0.5px solid #F0997B}
 .meal-notes{font-size:12px;color:var(--text2);font-style:italic;margin-top:3px}
+.entry-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+.btn-edit{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit}
+.btn-delete{background:none;border:1px solid var(--red);border-radius:8px;padding:4px 12px;font-size:12px;color:var(--red);cursor:pointer;font-family:inherit}
 
 /* Symptom dots */
 .sym-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)}
@@ -219,6 +222,8 @@ select.fi{background-image:none}
 .modal-title{font-size:17px;font-weight:600;color:var(--text)}
 .modal-cancel{display:none}
 .modal-save{display:none}
+.modal-delete{position:absolute;left:20px;font-size:13px;color:var(--red);background:none;border:none;cursor:pointer;font-family:inherit;display:none}
+.modal-delete.visible{display:block}
 .modal-body{overflow-y:auto;padding:16px;flex:1;-webkit-overflow-scrolling:touch}
 .modal-footer{flex-shrink:0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,20px));background:var(--card);border-top:0.5px solid var(--border);display:flex;gap:10px}
 .modal-btn-cancel{flex:1;background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:14px;padding:15px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
@@ -315,7 +320,8 @@ select.fi{background-image:none}
 <div class="modal-overlay" id="meal-modal">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">Log a meal</span>
+      <button class="modal-delete" id="meal-delete-btn" onclick="deleteMeal()">Delete</button>
+      <span class="modal-title" id="meal-modal-title">Log a meal</span>
     </div>
     <div class="modal-body">
       <div class="sdiv">Meal info</div>
@@ -358,7 +364,8 @@ select.fi{background-image:none}
 <div class="modal-overlay" id="night-modal">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">Record symptoms</span>
+      <button class="modal-delete" id="night-delete-btn" onclick="deleteNight()">Delete</button>
+      <span class="modal-title" id="night-modal-title">Record symptoms</span>
     </div>
     <div class="modal-body">
       <div class="card">
@@ -409,6 +416,8 @@ let symRatings={};
 let currentMealType='D';
 let currentTab='log';
 let notifTimers={};
+let editingMealId=null;
+let editingNightId=null;
 
 function persist(){
   localStorage.setItem('gd_meals',JSON.stringify(meals));
@@ -458,12 +467,18 @@ function sw(tab){
 }
 
 // ── MEAL FORM ──
-function openMealForm(){
-  selAllergens=[];currentMealType='D';
-  document.getElementById('m-time').value=nowTime();
-  document.getElementById('m-desc').value='';
-  document.getElementById('m-notes').value='';
+function openMealForm(id){
+  editingMealId=id||null;
+  const existing=id?meals.find(m=>m.id===id):null;
+  selAllergens=existing?[...existing.allergens]:[]; 
+  currentMealType=existing?existing.type:'D';
+  document.getElementById('m-time').value=existing?existing.time:nowTime();
+  document.getElementById('m-desc').value=existing?existing.description:'';
+  document.getElementById('m-notes').value=existing?existing.notes:'';
   document.getElementById('new-allergen').value='';
+  document.getElementById('meal-modal-title').textContent=existing?'Edit meal':'Log a meal';
+  const delBtn=document.getElementById('meal-delete-btn');
+  delBtn.classList.toggle('visible',!!existing);
   renderTypeRow();renderAllergenChips();
   openModal('meal-modal');
 }
@@ -497,39 +512,71 @@ function addAllergenFromForm(){
 function saveMeal(){
   const desc=document.getElementById('m-desc').value.trim();
   if(!desc){alert('Please enter a meal description.');return;}
-  meals.unshift({
-    id:Date.now()+'',type:currentMealType,label:TYPE_LABELS[currentMealType],
-    time:document.getElementById('m-time').value,date:todayStr(),
-    description:desc,allergens:[...selAllergens],
-    notes:document.getElementById('m-notes').value.trim()
-  });
-  persist();closeModal('meal-modal');renderMeals();toast('Meal logged ✓');
+  if(editingMealId){
+    const idx=meals.findIndex(m=>m.id===editingMealId);
+    if(idx>-1){
+      meals[idx]={...meals[idx],type:currentMealType,label:TYPE_LABELS[currentMealType],
+        time:document.getElementById('m-time').value,description:desc,
+        allergens:[...selAllergens],notes:document.getElementById('m-notes').value.trim()};
+    }
+    toast('Meal updated ✓');
+  } else {
+    meals.unshift({
+      id:Date.now()+'',type:currentMealType,label:TYPE_LABELS[currentMealType],
+      time:document.getElementById('m-time').value,date:todayStr(),
+      description:desc,allergens:[...selAllergens],
+      notes:document.getElementById('m-notes').value.trim()
+    });
+    toast('Meal logged ✓');
+  }
+  persist();closeModal('meal-modal');renderMeals();
+}
+
+function deleteMeal(){
+  if(!editingMealId)return;
+  if(!confirm('Delete this meal entry?'))return;
+  meals=meals.filter(m=>m.id!==editingMealId);
+  persist();closeModal('meal-modal');renderMeals();toast('Meal deleted');
 }
 
 function renderMeals(){
   const tm=meals.filter(m=>m.date===todayStr());
   const el=document.getElementById('meals-list');
   if(!tm.length){el.innerHTML=`<div class="empty"><i class="ti ti-salad" aria-hidden="true"></i><div class="empty-title">No meals logged today</div><div class="empty-sub">Tap "Add meal" to start tracking</div></div>`;return;}
-  el.innerHTML=`<div class="card">${tm.map((m,i)=>`
+  el.innerHTML=`<div class="card">${tm.map((m)=>`
     <div class="meal-row">
       <div class="meal-top"><span class="type-badge badge-${m.type}">${m.label}</span><span class="meal-time">${m.time||'—'}</span></div>
       <div class="meal-desc">${m.description}</div>
       ${m.allergens?.length?`<div class="pill-row">${m.allergens.map(a=>`<span class="a-pill">${a}</span>`).join('')}</div>`:''}
       ${m.notes?`<div class="meal-notes">${m.notes}</div>`:''}
+      <div class="entry-actions"><button class="btn-edit" onclick="openMealForm('${m.id}')"><i class="ti ti-pencil" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Edit</button></div>
     </div>`).join('')}</div>`;
 }
 
 // ── NIGHT FORM ──
-function openNightForm(){
-  symRatings={};
-  document.getElementById('n-date').value=todayStr();
-  document.getElementById('n-time').value=nowTime();
-  document.getElementById('n-notes').value='';
+function openNightForm(id){
+  editingNightId=id||null;
+  const existing=id?nights.find(n=>n.id===id):null;
+  symRatings=existing?{...existing.symptoms}:{};
+  document.getElementById('n-date').value=existing?existing.date:todayStr();
+  document.getElementById('n-time').value=existing?existing.time:nowTime();
+  document.getElementById('n-notes').value=existing?existing.notes:'';
+  document.getElementById('night-modal-title').textContent=existing?'Edit night event':'Record symptoms';
+  const delBtn=document.getElementById('night-delete-btn');
+  delBtn.classList.toggle('visible',!!existing);
   document.getElementById('sym-rater').innerHTML=SYMPTOMS.map(s=>`
     <div class="sym-row">
       <div class="sym-lbl">${s}</div>
       <div class="dot-row">${[1,2,3,4].map(n=>`<button class="dot" id="d${s.replace(/\W/g,'')}${n}" onclick="rateSym('${s}',${n})">${n}</button>`).join('')}</div>
     </div>`).join('');
+  // Re-apply ratings to dots
+  Object.entries(symRatings).forEach(([s,v])=>{
+    const k=s.replace(/\W/g,'');
+    [1,2,3,4].forEach(n=>{
+      const el=document.getElementById('d'+k+n);
+      if(el&&n<=v)el.classList.add('s'+Math.min(v,4));
+    });
+  });
   openModal('night-modal');
 }
 
@@ -546,13 +593,32 @@ function saveNight(){
   const act=Object.entries(symRatings).filter(([,v])=>v>0);
   if(!act.length){alert('Rate at least one symptom.');return;}
   const nd=document.getElementById('n-date').value;
-  nights.unshift({
-    id:Date.now()+'',date:nd,time:document.getElementById('n-time').value,
-    symptoms:Object.fromEntries(act),maxSeverity:Math.max(...act.map(([,v])=>v)),
-    notes:document.getElementById('n-notes').value.trim(),
-    linkedAllergens:meals.filter(m=>m.date===nd).flatMap(m=>m.allergens||[])
-  });
-  persist();closeModal('night-modal');renderNights();toast('Night event saved ✓');
+  if(editingNightId){
+    const idx=nights.findIndex(n=>n.id===editingNightId);
+    if(idx>-1){
+      nights[idx]={...nights[idx],date:nd,time:document.getElementById('n-time').value,
+        symptoms:Object.fromEntries(act),maxSeverity:Math.max(...act.map(([,v])=>v)),
+        notes:document.getElementById('n-notes').value.trim(),
+        linkedAllergens:meals.filter(m=>m.date===nd).flatMap(m=>m.allergens||[])};
+    }
+    toast('Night event updated ✓');
+  } else {
+    nights.unshift({
+      id:Date.now()+'',date:nd,time:document.getElementById('n-time').value,
+      symptoms:Object.fromEntries(act),maxSeverity:Math.max(...act.map(([,v])=>v)),
+      notes:document.getElementById('n-notes').value.trim(),
+      linkedAllergens:meals.filter(m=>m.date===nd).flatMap(m=>m.allergens||[])
+    });
+    toast('Night event saved ✓');
+  }
+  persist();closeModal('night-modal');renderNights();
+}
+
+function deleteNight(){
+  if(!editingNightId)return;
+  if(!confirm('Delete this night event?'))return;
+  nights=nights.filter(n=>n.id!==editingNightId);
+  persist();closeModal('night-modal');renderNights();toast('Event deleted');
 }
 
 function renderNights(){
@@ -563,7 +629,7 @@ function renderNights(){
     const sc=n.maxSeverity<=1?'sev-mild':n.maxSeverity<=2?'sev-mod':'sev-sev';
     const sy=Object.entries(n.symptoms).filter(([,v])=>v>0).map(([k,v])=>`${k} (${v})`).join(', ');
     const d=new Date(n.date+'T12:00:00');
-    return `<div class="night-row"><div class="night-top"><div class="night-date">${d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div><span class="sev ${sc}">${sl}</span></div><div class="night-syms">${sy}</div>${n.time?`<div class="night-sub">Woke at ${n.time}</div>`:''}</div>`;
+    return `<div class="night-row"><div class="night-top"><div class="night-date">${d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div><span class="sev ${sc}">${sl}</span></div><div class="night-syms">${sy}</div>${n.time?`<div class="night-sub">Woke at ${n.time}</div>`:''}<div class="entry-actions"><button class="btn-edit" onclick="openNightForm('${n.id}')"><i class="ti ti-pencil" aria-hidden="true" style="font-size:11px;margin-right:3px"></i>Edit</button></div></div>`;
   }).join('')}</div>`;
 }
 
